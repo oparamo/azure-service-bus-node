@@ -1,4 +1,4 @@
-import { OnMessage, OnError, MessagingError, delay, Message, ReceiveMode, Namespace } from "../lib";
+import { Message, ReceiveMode, Namespace } from "../lib";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -14,24 +14,20 @@ async function main(): Promise<void> {
 
   console.log("Created listener");
 
-  const onMessage: OnMessage = async (brokeredMessage: Message) => {
+  // resolves when 3 messages have been received or 3 seconds have elapsed
+  const messages = await client.receiveBatch(3, 3);
+  const totalMessages = messages.length;
+
+  console.log("Total batch received: ", totalMessages);
+
+  for (let index = 0; index < totalMessages; index++) {
+    const brokeredMessage: Message = messages[index];
     const messageBody = brokeredMessage.body ? brokeredMessage.body.toString() : null;
 
-    console.log("Message body: ", messageBody);
+    console.log(`Message #${index} body: ${messageBody}`);
 
     brokeredMessage.complete();
   }
-
-  const onError: OnError = (err: MessagingError | Error) => {
-    console.log("Error consuming message: ", err);
-  };
-
-  client.receive(onMessage, onError, { autoComplete: true });
-
-  console.log("Listening for messages");
-
-  // give the receiver some time to consume messages
-  await delay(3000);
 
   return ns.close();
 }
