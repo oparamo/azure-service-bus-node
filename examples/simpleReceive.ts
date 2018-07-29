@@ -15,13 +15,17 @@ async function main(): Promise<void> {
   console.log("Created listener");
 
   const onMessage: OnMessage = async (brokeredMessage: Message) => {
-    console.log(">>>> Message: ", brokeredMessage);
+    console.log("Message: ", brokeredMessage);
+
+    const messageBody = brokeredMessage.body ? brokeredMessage.body.toString() : null;
+
+    console.log("Message body: ", messageBody);
 
     brokeredMessage.complete();
   }
 
   const onError: OnError = (err: MessagingError | Error) => {
-    console.log(">>>> Error occurred: ", err);
+    console.log("Error consuming message: ", err);
   };
 
   client.receive(onMessage, onError, { autoComplete: true });
@@ -34,4 +38,4 @@ async function main(): Promise<void> {
   return ns.close();
 }
 
-main().catch((err) => console.log("error: ", err));
+main().catch((err) => console.log("Error: ", err));
