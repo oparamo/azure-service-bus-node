@@ -4,29 +4,13 @@
 import * as debugModule from "debug";
 import { MessagingError } from "./amqp-common";
 import { ConnectionContext } from "./connectionContext";
-import { ReceiveOptions, OnError, OnMessage } from ".";
+import { ReceiveMode, ReceiveOptions, OnError, OnMessage } from ".";
 import { StreamingReceiver, ReceiveHandler, MessageHandlerOptions } from "./streamingReceiver";
 import { BatchingReceiver } from "./batchingReceiver";
 import { Message } from "./message";
 import { Client } from "./client";
+
 const debug = debugModule("azure:service-bus:subscription-client");
-
-/**
- * The mode in which messages should be received
- */
-export enum ReceiveMode {
-  /**
-   * Peek the message and lock it until it is settled or times out.
-   * @type {Number}
-   */
-  peekLock = 1,
-
-  /**
-   * Remove the message from the service bus upon delivery.
-   * @type {Number}
-   */
-  receiveAndDelete = 2
-}
 
 /**
  * Describes the options that can be provided while creating the SubscriptionClient.

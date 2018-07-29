@@ -7,10 +7,8 @@ import { ConnectionContext } from "./connectionContext";
 import { MessageSender } from "./messageSender";
 import { SBMessage } from "./message";
 import { Client } from "./client";
+
 const debug = debugModule("azure:service-bus:topic-client");
-
-
-
 
 export class TopicClient extends Client {
   /**

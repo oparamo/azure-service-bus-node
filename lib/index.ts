@@ -11,6 +11,8 @@ export {
 } from "./rhea-promise";
 export { Message, ReceivedSBMessage, SBMessage } from "./message";
 export { ReceiveHandler } from "./streamingReceiver";
-export { ReceiveOptions, OnError, OnMessage } from "./messageReceiver";
-export { QueueClientOptions, QueueClient, ReceiveMode } from "./queueClient";
+export { ReceiveMode, ReceiveOptions, OnError, OnMessage } from "./messageReceiver";
+export { TopicClient } from "./topicClient";
+export { SubscriptionClientOptions, SubscriptionClient } from "./subscriptionClient";
+export { QueueClientOptions, QueueClient } from "./queueClient";
 export { Namespace, NamespaceOptions } from "./namespace";
