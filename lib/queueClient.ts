@@ -9,7 +9,7 @@ import { MessageSender } from "./messageSender";
 import { ReceiveMode, ReceiveOptions, OnError, OnMessage } from ".";
 import { StreamingReceiver, ReceiveHandler, MessageHandlerOptions } from "./streamingReceiver";
 import { BatchingReceiver } from "./batchingReceiver";
-import { Message, SBMessage } from "./message";
+import { Message, ServiceBusMessage } from "./message";
 import { Client } from "./client";
 
 const debug = debugModule("azure:service-bus:queue-client");
@@ -95,7 +95,7 @@ export class QueueClient extends Client {
    * @param {any} data  Message to send.  Will be sent as UTF8-encoded JSON string.
    * @returns {Promise<Delivery>} Promise<Delivery>
    */
-  async send(data: SBMessage): Promise<Delivery> {
+  async send(data: ServiceBusMessage): Promise<Delivery> {
     const sender = MessageSender.create(this._context);
     return await sender.send(data);
   }
@@ -109,7 +109,7 @@ export class QueueClient extends Client {
    *
    * @return {Promise<Delivery>} Promise<Delivery>
    */
-  async sendBatch(datas: SBMessage[]): Promise<Delivery> {
+  async sendBatch(datas: ServiceBusMessage[]): Promise<Delivery> {
     const sender = MessageSender.create(this._context);
     return await sender.sendBatch(datas);
   }

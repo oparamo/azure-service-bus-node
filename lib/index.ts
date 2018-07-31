@@ -9,7 +9,7 @@ export {
 export {
   AmqpError, Delivery, Dictionary, MessageProperties, MessageHeader
 } from "./rhea-promise";
-export { Message, ReceivedSBMessage, SBMessage } from "./message";
+export { Message, ReceivedSBMessage, ServiceBusMessage } from "./message";
 export { ReceiveHandler } from "./streamingReceiver";
 export { ReceiveMode, ReceiveOptions, OnError, OnMessage } from "./messageReceiver";
 export { TopicClient } from "./topicClient";
