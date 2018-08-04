@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 import * as debugModule from "debug";
-import { MessagingError } from "./amqp-common";
-import { Delivery } from "./rhea-promise";
 import { ConnectionContext } from "./connectionContext";
 import { MessageSender } from "./messageSender";
 import { ReceiveMode, ReceiveOptions, OnError, OnMessage } from ".";
@@ -79,11 +77,13 @@ export class QueueClient extends Client {
    * Sends the given message to the ServiceBus Queue.
    *
    * @param {any} data  Message to send.  Will be sent as UTF8-encoded JSON string.
-   * @returns {Promise<Delivery>} Promise<Delivery>
+   * @returns {Promise<void>} Promise<void>
    */
-  async send(data: ServiceBusMessage): Promise<Delivery> {
+  async send(data: ServiceBusMessage): Promise<void> {
     const sender = MessageSender.create(this._context);
-    return await sender.send(data);
+    await sender.send(data);
+
+    return Promise.resolve();
   }
 
   /**
@@ -93,11 +93,13 @@ export class QueueClient extends Client {
    * @param {Array<Message>} datas  An array of Message objects to be sent in a Batch
    * message.
    *
-   * @return {Promise<Delivery>} Promise<Delivery>
+   * @return {Promise<void>} Promise<void>
    */
-  async sendBatch(datas: ServiceBusMessage[]): Promise<Delivery> {
+  async sendBatch(datas: ServiceBusMessage[]): Promise<void> {
     const sender = MessageSender.create(this._context);
-    return await sender.sendBatch(datas);
+    await sender.sendBatch(datas);
+
+    return Promise.resolve();
   }
 
   /**
@@ -146,27 +148,23 @@ export class QueueClient extends Client {
    */
   async receiveBatch(maxMessageCount: number, maxWaitTimeInSeconds?: number): Promise<Message[]> {
     if (!this._context.batchingReceiver ||
-      (this._context.batchingReceiver && !this._context.batchingReceiver.isOpen()) ||
-      (this._context.batchingReceiver && !this._context.batchingReceiver.isReceivingMessages)) {
+      !this._context.batchingReceiver.isOpen() ||
+      !this._context.batchingReceiver.isReceivingMessages) {
       const options: ReceiveOptions = {
         maxConcurrentCalls: 0,
         receiveMode: this.receiveMode
       };
       const bReceiver: BatchingReceiver = BatchingReceiver.create(this._context, options);
       this._context.batchingReceiver = bReceiver;
-      let error: MessagingError | undefined;
-      let result: Message[] = [];
+
       try {
-        result = await bReceiver.receive(maxMessageCount, maxWaitTimeInSeconds);
+        return await bReceiver.receive(maxMessageCount, maxWaitTimeInSeconds);
       } catch (err) {
-        error = err;
         debug("[%s] Receiver '%s', an error occurred while receiving %d messages for %d max time:\n %O",
           this._context.namespace.connectionId, bReceiver.id, maxMessageCount, maxWaitTimeInSeconds, err);
+
+        throw err;
       }
-      if (error) {
-        throw error;
-      }
-      return result;
     } else {
       const rcvr = this._context.batchingReceiver;
       const msg = `A "${rcvr.receiverType}" receiver with id "${rcvr.id}" has already been ` +
