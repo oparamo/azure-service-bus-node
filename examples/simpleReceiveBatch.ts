@@ -10,7 +10,7 @@ console.log("path: ", path);
 
 async function main(): Promise<void> {
   const ns: Namespace = Namespace.createFromConnectionString(str);
-  const client = ns.createQueueClient(path, { receiveMode: ReceiveMode.peekLock, maxConcurrentCalls: 1 });
+  const client = ns.createQueueClient(path, { receiveMode: ReceiveMode.peekLock });
 
   console.log("Created listener");
 
