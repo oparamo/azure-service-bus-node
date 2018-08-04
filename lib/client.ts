@@ -34,17 +34,7 @@ export abstract class Client {
     this.id = `${name}/${uuid()}`;
     this._context = ClientEntityContext.create(name, context);
   }
-  /**
-   * Provides the current type of the Client.
-   * @return {string} The entity type.
-   */
-  get type(): string {
-    let result = "Client";
-    if ((this as any).constructor && (this as any).constructor.name) {
-      result = (this as any).constructor.name;
-    }
-    return result;
-  }
+
   /**
    * Closes the client. This is an abstract method.
    */
