@@ -10,23 +10,10 @@
     "noImplicitReturns": true,
     "outDir": "dist",
     "allowJs": false,
-    "noUnusedLocals":true,
+    "noUnusedLocals": true,
     "strict": true,
-    "strictPropertyInitialization": true,
-    "strictNullChecks": true,
     "declaration": true,
-    "declarationDir": "./typings",
-    "lib": [
-      "es2015",
-      "dom",
-      "dom.iterable",
-      "es5",
-      "es6",
-      "es7",
-      "esnext",
-      "esnext.asynciterable",
-      "es2015.iterable"
-    ]
+    "declarationDir": "./typings"
   },
   "compileOnSave": true,
   "exclude": [
