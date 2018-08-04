@@ -10,7 +10,6 @@ import { QueueClientOptions, QueueClient } from "./queueClient";
 import { TopicClient } from "./topicClient";
 import { ConnectionConfig, DataTransformer, TokenProvider, AadTokenProvider } from "./amqp-common";
 
-
 const debug = debugModule("azure:service-bus:namespace");
 
 export interface NamespaceOptions {
@@ -119,7 +118,7 @@ export class Namespace {
    * @returns {Namespace} - An instance of the Namespace.
    */
   static createFromConnectionString(connectionString: string, options?: NamespaceOptions): Namespace {
-    if (!connectionString || (connectionString && typeof connectionString !== "string")) {
+    if (!connectionString || typeof connectionString !== "string") {
       throw new Error("'connectionString' is a required parameter and must be of type: 'string'.");
     }
     const config = ConnectionConfig.create(connectionString);
@@ -140,16 +139,12 @@ export class Namespace {
     host: string,
     credentials: ApplicationTokenCredentials | UserTokenCredentials | DeviceTokenCredentials | MSITokenCredentials,
     options?: NamespaceOptions): Namespace {
-    if (!host || (host && typeof host !== "string")) {
+    if (!host || typeof host !== "string") {
       throw new Error("'host' is a required parameter and must be of type: 'string'.");
     }
 
-    if (!credentials ||
-      !(credentials instanceof ApplicationTokenCredentials ||
-        credentials instanceof UserTokenCredentials ||
-        credentials instanceof DeviceTokenCredentials ||
-        credentials instanceof MSITokenCredentials)) {
-      throw new Error("'credentials' is a required parameter and must be an instance of ApplicationTokenCredentials | UserTokenCredentials | DeviceTokenCredentials | MSITokenCredentials.");
+    if (!credentials) {
+      throw new Error("'credentials' is a required parameter..");
     }
 
     if (!host.endsWith("/")) host += "/";

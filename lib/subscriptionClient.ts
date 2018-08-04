@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 import * as debugModule from "debug";
-import { MessagingError } from "./amqp-common";
 import { ConnectionContext } from "./connectionContext";
 import { ReceiveMode, ReceiveOptions, OnError, OnMessage } from ".";
 import { StreamingReceiver, ReceiveHandler, MessageHandlerOptions } from "./streamingReceiver";
@@ -121,33 +120,28 @@ export class SubscriptionClient extends Client {
    * @param {number} maxMessageCount        The maximum message count. Must be a value greater than 0.
    * @param {number} [maxWaitTimeInSeconds] The maximum wait time in seconds for which the Receiver
    * should wait to receiver the said amount of messages. If not provided, it defaults to 60 seconds.
-   * @param {ReceiveOptions} [options]      Options for how you'd like to connect.
    *
    * @returns {Promise<Message[]>} A promise that resolves with an array of Message objects.
    */
   async receiveBatch(maxMessageCount: number, maxWaitTimeInSeconds?: number): Promise<Message[]> {
     if (!this._context.batchingReceiver ||
-      (this._context.batchingReceiver && !this._context.batchingReceiver.isOpen()) ||
-      (this._context.batchingReceiver && !this._context.batchingReceiver.isReceivingMessages)) {
+      !this._context.batchingReceiver.isOpen() ||
+      !this._context.batchingReceiver.isReceivingMessages) {
       const options: ReceiveOptions = {
-        maxConcurrentCalls: this.maxConcurrentCalls,
+        maxConcurrentCalls: 0,
         receiveMode: this.receiveMode
       };
       const bReceiver: BatchingReceiver = BatchingReceiver.create(this._context, options);
       this._context.batchingReceiver = bReceiver;
-      let error: MessagingError | undefined;
-      let result: Message[] = [];
+
       try {
-        result = await bReceiver.receive(maxMessageCount, maxWaitTimeInSeconds);
+        return await bReceiver.receive(maxMessageCount, maxWaitTimeInSeconds);
       } catch (err) {
-        error = err;
         debug("[%s] Receiver '%s', an error occurred while receiving %d messages for %d max time:\n %O",
           this._context.namespace.connectionId, bReceiver.id, maxMessageCount, maxWaitTimeInSeconds, err);
+
+        throw err;
       }
-      if (error) {
-        throw error;
-      }
-      return result;
     } else {
       const rcvr = this._context.batchingReceiver;
       const msg = `A "${rcvr.receiverType}" receiver with id "${rcvr.id}" has already been ` +
