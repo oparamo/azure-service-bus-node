@@ -22,13 +22,6 @@ export interface SubscriptionClientOptions {
    * Default: ReceiveMode.peekLock
    */
   receiveMode?: ReceiveMode;
-  /**
-   * @property {number} [maxConcurrentCalls] he maximum number of messages that should be
-   * processed concurrently while in peek lock mode. Once this limit has been reached, more
-   * messages will not be received until messages currently being processed have been settled.
-   * Default: 1
-   */
-  maxConcurrentCalls?: number;
 }
 
 export class SubscriptionClient extends Client {
@@ -45,13 +38,6 @@ export class SubscriptionClient extends Client {
    * Default: ReceiveMode.peekLock
    */
   receiveMode: ReceiveMode;
-  /**
-   * @property {number} maxConcurrentCalls he maximum number of messages that should be
-   * processed concurrently while in peek lock mode. Once this limit has been reached, more
-   * messages will not be received until messages currently being processed have been settled.
-   * Default: 1
-   */
-  maxConcurrentCalls: number;
 
   /**
    * Instantiates a client pointing to the ServiceBus Subscription given by this configuration.
@@ -68,7 +54,6 @@ export class SubscriptionClient extends Client {
     this.topicPath = topicPath;
     this.subscriptionName = subscriptionName;
     this.receiveMode = options.receiveMode || ReceiveMode.peekLock;
-    this.maxConcurrentCalls = options.maxConcurrentCalls || 1;
   }
 
   /**
@@ -103,17 +88,16 @@ export class SubscriptionClient extends Client {
    * @param {OnMessage} onMessage          The message handler to receive Message objects.
    * @param {OnError} onError              The error handler to receive an error that occurs
    * while receiving messages.
-   * @param {ReceiveOptions} [options]     Options for how you'd like to connect.
+   * @param {MessageHandlerOptions} [options]     Options for how you'd like to connect.
    *
    * @returns {ReceiveHandler} ReceiveHandler - An object that provides a mechanism to stop
    * receiving more messages.
    */
   receive(onMessage: OnMessage, onError: OnError, options?: MessageHandlerOptions): ReceiveHandler {
-    if (!this._context.streamingReceiver ||
-      (this._context.streamingReceiver && !this._context.streamingReceiver.isOpen())) {
+    if (!this._context.streamingReceiver || !this._context.streamingReceiver.isOpen()) {
       if (!options) options = {};
       const rcvOptions: ReceiveOptions = {
-        maxConcurrentCalls: this.maxConcurrentCalls,
+        maxConcurrentCalls: options.maxConcurrentCalls || 1,
         receiveMode: this.receiveMode,
         autoComplete: options.autoComplete
       };
