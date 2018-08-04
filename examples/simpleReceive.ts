@@ -12,7 +12,7 @@ console.log("path: ", path);
 let ns: Namespace;
 async function main(): Promise<void> {
   ns = Namespace.createFromConnectionString(str);
-  const client = ns.createQueueClient(path, { receiveMode: ReceiveMode.peekLock, maxConcurrentCalls: 1 });
+  const client = ns.createQueueClient(path, { receiveMode: ReceiveMode.peekLock });
   const onMessage: OnMessage = async (brokeredMessage: Message) => {
     console.log(">>> Message: ", brokeredMessage);
     console.log("### Actual message:", brokeredMessage.body ? brokeredMessage.body.toString() : null);
@@ -32,7 +32,7 @@ async function main(): Promise<void> {
     console.log(">>>>> Error occurred: ", err);
   };
   //console.log(onMessage, onError);
-  client.receive(onMessage, onError, { autoComplete: true });
+  client.receive(onMessage, onError, { autoComplete: true, maxConcurrentCalls: 1 });
   // const msgs = await client.receiveBatch(10);
   // console.log(msgs);
   // giving some time for receiver setup to complete. This will make sure that the receiver can receive the newly sent
