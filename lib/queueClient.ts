@@ -61,8 +61,6 @@ export class QueueClient extends Client {
         if (this._context.streamingReceiver) {
           await this._context.streamingReceiver.close();
         }
-        // Close the management session
-        await this._context.managementSession!.close();
         debug("Closed the client '%s'.", this.id);
       }
     } catch (err) {

@@ -94,6 +94,12 @@ export class Namespace {
         for (const client of Object.values(this._context.clients)) {
           await client.close();
         }
+
+        // Close management sessions
+        for (const client of Object.values(this._context.clients)) {
+          await (client as any)._context.managementSession!.close();
+        }
+
         // Close the cbs session
         if (this._context.cbsSession) {
           await this._context.cbsSession!.close();
