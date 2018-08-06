@@ -2,31 +2,14 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 import * as debugModule from "debug";
-import { MessagingError } from "./amqp-common";
 import { ConnectionContext } from "./connectionContext";
-import { ReceiveOptions, OnError, OnMessage } from ".";
+import { ReceiveMode, ReceiveOptions, OnError, OnMessage } from ".";
 import { StreamingReceiver, ReceiveHandler, MessageHandlerOptions } from "./streamingReceiver";
 import { BatchingReceiver } from "./batchingReceiver";
 import { Message } from "./message";
 import { Client } from "./client";
+
 const debug = debugModule("azure:service-bus:subscription-client");
-
-/**
- * The mode in which messages should be received
- */
-export enum ReceiveMode {
-  /**
-   * Peek the message and lock it until it is settled or times out.
-   * @type {Number}
-   */
-  peekLock = 1,
-
-  /**
-   * Remove the message from the service bus upon delivery.
-   * @type {Number}
-   */
-  receiveAndDelete = 2
-}
 
 /**
  * Describes the options that can be provided while creating the SubscriptionClient.
@@ -38,13 +21,6 @@ export interface SubscriptionClientOptions {
    * Default: ReceiveMode.peekLock
    */
   receiveMode?: ReceiveMode;
-  /**
-   * @property {number} [maxConcurrentCalls] he maximum number of messages that should be
-   * processed concurrently while in peek lock mode. Once this limit has been reached, more
-   * messages will not be received until messages currently being processed have been settled.
-   * Default: 1
-   */
-  maxConcurrentCalls?: number;
 }
 
 export class SubscriptionClient extends Client {
@@ -61,13 +37,6 @@ export class SubscriptionClient extends Client {
    * Default: ReceiveMode.peekLock
    */
   receiveMode: ReceiveMode;
-  /**
-   * @property {number} maxConcurrentCalls he maximum number of messages that should be
-   * processed concurrently while in peek lock mode. Once this limit has been reached, more
-   * messages will not be received until messages currently being processed have been settled.
-   * Default: 1
-   */
-  maxConcurrentCalls: number;
 
   /**
    * Instantiates a client pointing to the ServiceBus Subscription given by this configuration.
@@ -84,7 +53,6 @@ export class SubscriptionClient extends Client {
     this.topicPath = topicPath;
     this.subscriptionName = subscriptionName;
     this.receiveMode = options.receiveMode || ReceiveMode.peekLock;
-    this.maxConcurrentCalls = options.maxConcurrentCalls || 1;
   }
 
   /**
@@ -99,8 +67,6 @@ export class SubscriptionClient extends Client {
         if (this._context.streamingReceiver) {
           await this._context.streamingReceiver.close();
         }
-        // Close the management session
-        await this._context.managementSession!.close();
         debug("Closed the subscription client '%s'.", this.id);
       }
     } catch (err) {
@@ -119,17 +85,16 @@ export class SubscriptionClient extends Client {
    * @param {OnMessage} onMessage          The message handler to receive Message objects.
    * @param {OnError} onError              The error handler to receive an error that occurs
    * while receiving messages.
-   * @param {ReceiveOptions} [options]     Options for how you'd like to connect.
+   * @param {MessageHandlerOptions} [options]     Options for how you'd like to connect.
    *
    * @returns {ReceiveHandler} ReceiveHandler - An object that provides a mechanism to stop
    * receiving more messages.
    */
   receive(onMessage: OnMessage, onError: OnError, options?: MessageHandlerOptions): ReceiveHandler {
-    if (!this._context.streamingReceiver ||
-      (this._context.streamingReceiver && !this._context.streamingReceiver.isOpen())) {
+    if (!this._context.streamingReceiver || !this._context.streamingReceiver.isOpen()) {
       if (!options) options = {};
       const rcvOptions: ReceiveOptions = {
-        maxConcurrentCalls: this.maxConcurrentCalls,
+        maxConcurrentCalls: options.maxConcurrentCalls || 1,
         receiveMode: this.receiveMode,
         autoComplete: options.autoComplete
       };
@@ -153,33 +118,28 @@ export class SubscriptionClient extends Client {
    * @param {number} maxMessageCount        The maximum message count. Must be a value greater than 0.
    * @param {number} [maxWaitTimeInSeconds] The maximum wait time in seconds for which the Receiver
    * should wait to receiver the said amount of messages. If not provided, it defaults to 60 seconds.
-   * @param {ReceiveOptions} [options]      Options for how you'd like to connect.
    *
    * @returns {Promise<Message[]>} A promise that resolves with an array of Message objects.
    */
   async receiveBatch(maxMessageCount: number, maxWaitTimeInSeconds?: number): Promise<Message[]> {
     if (!this._context.batchingReceiver ||
-      (this._context.batchingReceiver && !this._context.batchingReceiver.isOpen()) ||
-      (this._context.batchingReceiver && !this._context.batchingReceiver.isReceivingMessages)) {
+      !this._context.batchingReceiver.isOpen() ||
+      !this._context.batchingReceiver.isReceivingMessages) {
       const options: ReceiveOptions = {
-        maxConcurrentCalls: this.maxConcurrentCalls,
+        maxConcurrentCalls: 0,
         receiveMode: this.receiveMode
       };
       const bReceiver: BatchingReceiver = BatchingReceiver.create(this._context, options);
       this._context.batchingReceiver = bReceiver;
-      let error: MessagingError | undefined;
-      let result: Message[] = [];
+
       try {
-        result = await bReceiver.receive(maxMessageCount, maxWaitTimeInSeconds);
+        return await bReceiver.receive(maxMessageCount, maxWaitTimeInSeconds);
       } catch (err) {
-        error = err;
         debug("[%s] Receiver '%s', an error occurred while receiving %d messages for %d max time:\n %O",
           this._context.namespace.connectionId, bReceiver.id, maxMessageCount, maxWaitTimeInSeconds, err);
+
+        throw err;
       }
-      if (error) {
-        throw error;
-      }
-      return result;
     } else {
       const rcvr = this._context.batchingReceiver;
       const msg = `A "${rcvr.receiverType}" receiver with id "${rcvr.id}" has already been ` +

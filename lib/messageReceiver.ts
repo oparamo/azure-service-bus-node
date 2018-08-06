@@ -6,9 +6,26 @@ import { LinkEntity } from "./linkEntity";
 import { ClientEntityContext } from "./clientEntityContext";
 import { MessagingError, translate } from "./amqp-common";
 import { Receiver, OnAmqpEvent, EventContext, ReceiverOptions } from "./rhea-promise";
-import { ReceiveMode, Message } from ".";
+import { Message } from ".";
 
 const debug = debugModule("azure:service-bus:receiver");
+
+/**
+ * The mode in which messages should be received
+ */
+export enum ReceiveMode {
+  /**
+   * Peek the message and lock it until it is settled or times out.
+   * @type {Number}
+   */
+  peekLock = 1,
+
+  /**
+   * Remove the message from the service bus upon delivery.
+   * @type {Number}
+   */
+  receiveAndDelete = 2
+}
 
 export enum ReceiverType {
   batching = "batching",

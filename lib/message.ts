@@ -24,9 +24,9 @@ export interface DeadLetterOptions {
 
 /**
  * Describes the message to be sent to ServiceBus.
- * @interface SBMessage.
+ * @interface ServiceBusMessage.
  */
-export interface SBMessage {
+export interface ServiceBusMessage {
   /**
    * @property {any} body - The message body that needs to be sent or is received.
    */
@@ -133,9 +133,9 @@ export interface SBMessage {
   userProperties?: Dictionary<any>;
 }
 
-export namespace SBMessage {
+export namespace ServiceBusMessage {
 
-  export function validate(msg: SBMessage): void {
+  export function validate(msg: ServiceBusMessage): void {
     if (!msg) {
       throw new Error("msg cannot be null or undefined.");
     }
@@ -202,7 +202,7 @@ export namespace SBMessage {
     }
   }
 
-  export function toAmqpMessage(msg: SBMessage): AmqpMessage {
+  export function toAmqpMessage(msg: ServiceBusMessage): AmqpMessage {
     validate(msg);
     const amqpMsg: AmqpMessage = {
       body: msg.body,
@@ -230,15 +230,15 @@ export namespace SBMessage {
     if (msg.partitionKey) amqpMsg.message_annotations![Constants.partitionKey] = msg.partitionKey;
     if (msg.viaPartitionKey) amqpMsg.message_annotations![Constants.viaPartitionKey] = msg.viaPartitionKey;
     if (msg.scheduledEnqueueTimeUtc) amqpMsg.message_annotations![Constants.scheduledEnqueueTime] = msg.scheduledEnqueueTimeUtc;
-    debug("SBMessage to AmqpMessage: %O", amqpMsg);
+    debug("ServiceBusMessage to AmqpMessage: %O", amqpMsg);
     return amqpMsg;
   }
 
-  export function fromAmqpMessage(msg: AmqpMessage): SBMessage {
+  export function fromAmqpMessage(msg: AmqpMessage): ServiceBusMessage {
     if (!msg) {
       throw new Error("msg cannot be null or undefined.");
     }
-    const sbmsg: SBMessage = {
+    const sbmsg: ServiceBusMessage = {
       body: msg.body,
     };
 
@@ -258,7 +258,7 @@ export namespace SBMessage {
       if (msg.message_annotations[Constants.viaPartitionKey]) sbmsg.viaPartitionKey = msg.message_annotations[Constants.viaPartitionKey];
       if (msg.message_annotations[Constants.scheduledEnqueueTime]) sbmsg.scheduledEnqueueTimeUtc = msg.message_annotations[Constants.scheduledEnqueueTime];
     }
-    debug("AmqpMessage to SBMessage: %O", sbmsg);
+    debug("AmqpMessage to ServiceBusMessage: %O", sbmsg);
     return sbmsg;
   }
 }
@@ -267,7 +267,7 @@ export namespace SBMessage {
  * Describes the message received from ServiceBus.
  * @class ReceivedSBMessage
  */
-export interface ReceivedSBMessage extends SBMessage {
+export interface ReceivedSBMessage extends ServiceBusMessage {
   /**
    * @property {string} [lockToken] The lock token for the current message. The lock token is a
    * reference to the lock that is being held by the broker in `ReceiveMode.PeekLock` mode. Locks
@@ -364,7 +364,7 @@ export interface ReceivedSBMessage extends SBMessage {
 export namespace ReceivedSBMessage {
 
   export function validate(msg: ReceivedSBMessage): void {
-    SBMessage.validate(msg);
+    ServiceBusMessage.validate(msg);
     if (msg.lockToken && typeof msg.lockToken !== "string") {
       throw new Error("contentType must be of type string.");
     }
@@ -399,7 +399,7 @@ export namespace ReceivedSBMessage {
 
   export function toAmqpMessage(msg: ReceivedSBMessage): AmqpMessage {
     ReceivedSBMessage.validate(msg);
-    const amqpMsg: AmqpMessage = SBMessage.toAmqpMessage(msg);
+    const amqpMsg: AmqpMessage = ServiceBusMessage.toAmqpMessage(msg);
     if (msg.deliveryCount) amqpMsg.delivery_count = msg.deliveryCount;
     if (!amqpMsg.message_annotations) amqpMsg.message_annotations = {};
     if (msg.deadLetterSource) amqpMsg.message_annotations[Constants.deadLetterSource] = msg.deadLetterSource;
@@ -412,7 +412,7 @@ export namespace ReceivedSBMessage {
   }
 
   export function fromAmqpMessage(msg: AmqpMessage, delivery: Delivery): ReceivedSBMessage {
-    const sbmsg: SBMessage = SBMessage.fromAmqpMessage(msg);
+    const sbmsg: ServiceBusMessage = ServiceBusMessage.fromAmqpMessage(msg);
     const props: any = {};
     if (msg.message_annotations) {
       if (msg.message_annotations[Constants.deadLetterSource]) props.deadLetterSource = msg.message_annotations[Constants.deadLetterSource];

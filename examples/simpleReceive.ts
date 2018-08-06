@@ -10,7 +10,7 @@ console.log("path: ", path);
 
 async function main(): Promise<void> {
   const ns: Namespace = Namespace.createFromConnectionString(str);
-  const client = ns.createQueueClient(path, { receiveMode: ReceiveMode.peekLock, maxConcurrentCalls: 1 });
+  const client = ns.createQueueClient(path, { receiveMode: ReceiveMode.peekLock });
 
   console.log("Created listener");
 
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
     console.log("Error consuming message: ", err);
   };
 
-  client.receive(onMessage, onError, { autoComplete: true });
+  client.receive(onMessage, onError, { autoComplete: true, maxConcurrentCalls: 1 });
 
   console.log("Listening for messages");
 

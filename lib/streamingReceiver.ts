@@ -58,6 +58,13 @@ export interface MessageHandlerOptions {
    * or while messages are received using receiveBatch(). Default: true.
    */
   autoComplete?: boolean;
+
+  /**
+   * @property {number} [maxConcurrentCalls] The maximum number of messages that should be
+   * processed concurrently while in peek lock mode. Once this limit has been reached, more
+   * messages will not be received until messages currently being processed have been settled.
+   */
+  maxConcurrentCalls?: number;
 }
 
 /**
