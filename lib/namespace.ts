@@ -127,7 +127,10 @@ export class Namespace {
     if (!connectionString || typeof connectionString !== "string") {
       throw new Error("'connectionString' is a required parameter and must be of type: 'string'.");
     }
+
     const config = ConnectionConfig.create(connectionString);
+    ConnectionConfig.validate(config);
+
     return new Namespace(config, options);
   }
 
@@ -155,9 +158,11 @@ export class Namespace {
 
     if (!host.endsWith("/")) host += "/";
     const connectionString = `Endpoint=sb://${host};SharedAccessKeyName=defaultKeyName;SharedAccessKey=defaultKeyValue`;
+
     if (!options) options = {};
     const clientOptions: NamespaceOptions = options;
     clientOptions.tokenProvider = new AadTokenProvider(credentials);
+
     return Namespace.createFromConnectionString(connectionString, clientOptions);
   }
 }
